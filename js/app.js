@@ -445,7 +445,7 @@
   }
 
   function choose(k) {
-    if (!S || S.done) return;
+    if (!S || S.done || qTl) return; // đang chuyển câu: các nút trên màn hình vẫn là của câu cũ
     if (S.mode === "practice" && S.answers[S.idx] !== null) return;
     S.answers[S.idx] = k;
     applyOptionState(true);
