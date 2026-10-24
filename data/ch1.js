@@ -410,6 +410,379 @@ window.CHAPTERS.push({
         "Mạng ngang hàng không có thiết bị trung tâm"
       ],
       e: "Token Ring dùng lược đồ vật lý Star (qua MAU) nên có ưu điểm của Star (dễ mở rộng, dễ bảo trì) và tương đối ổn định khi số máy trạm lớn."
+    },
+
+    // ================= BỔ SUNG (40 câu, 12-16-12) =================
+    // Câu có trường m là dạng "chọn tất cả đáp án đúng": m = chỉ số các phương án đúng.
+
+    // ===== NHẬN BIẾT (12) =====
+    {
+      l: 1,
+      q: "Thuật ngữ “Topo” trong phân loại mạng được hiểu là gì?",
+      o: [
+        "Cấu trúc hình học bố trí các phần tử của mạng",
+        "Giao thức quy định cấu trúc gói tin trên mạng",
+        "Phạm vi địa lý mà mạng có thể bao phủ được",
+        "Quan hệ giữa máy khách và máy chủ trong mạng"
+      ],
+      e: "Topo là cấu trúc hình học trong việc bố trí các phần tử của mạng: cách sắp xếp máy trạm, dây cáp, thiết bị và cách nối chúng với nhau. Phạm vi địa lý là phân loại theo quy mô; quan hệ máy khách – máy chủ là phân loại theo quan hệ máy trạm."
+    },
+    {
+      l: 1,
+      q: "Theo bài giảng, mạng có dây (hữu tuyến) gồm những dạng topo cơ bản nào?",
+      o: ["Bus, Star, Ring", "Mesh, Tree, Star", "Bus, Mesh, Tree", "Ring, Mesh, Tree"],
+      e: "Ba topo hữu tuyến cơ bản là Bus, Star, Ring. Mesh và Hierarchical (Tree) là các topo khác, hiếm dùng."
+    },
+    {
+      l: 1,
+      q: "Trong mạng LAN, thiết bị nào cung cấp các cổng LAN để cắm cáp UTP vào máy tính bàn?",
+      o: ["Switch", "Modem", "Access Point", "Trạm BTS"],
+      e: "Switch cung cấp các cổng LAN cắm cáp UTP vào máy tính bàn. Modem chuyển đổi tín hiệu, Access Point phát Wi-Fi, BTS là trạm thu phát của mạng di động."
+    },
+    {
+      l: 1,
+      q: "Để bảo mật, đường truyền VPN thường được mã hóa bởi giao thức nào?",
+      o: ["IPSec", "HTTP", "SMTP", "DHCP"],
+      e: "VPN không lập đường truyền riêng mà đi qua Internet, nên được mã hóa bởi các giao thức như IPSec."
+    },
+    {
+      l: 1,
+      q: "Phần mềm mã nguồn mở phổ biến nào cung cấp VPN client to site?",
+      o: ["OpenVPN", "BitTorrent", "VMware ESXi", "Outlook"],
+      e: "OpenVPN là phần mềm mã nguồn mở phổ biến nhất cung cấp VPN client to site, dùng giao thức mã hóa cùng tên. BitTorrent là ứng dụng chia sẻ tệp P2P."
+    },
+    {
+      l: 1,
+      q: "Theo bài giảng, mạng WAN được chia thành những loại nào?",
+      o: [
+        "WAN xí nghiệp và WAN công cộng (Internet)",
+        "WAN có dây và WAN không dây",
+        "WAN quảng bá và WAN điểm nối điểm",
+        "WAN nội bộ và WAN cá nhân"
+      ],
+      e: "WAN thường hình thành từ nhiều LAN, MAN và chia thành WAN xí nghiệp (Enterprise WAN) và WAN công cộng (Internet)."
+    },
+    {
+      l: 1,
+      q: "Chuẩn FDDI truyền tín hiệu theo phương pháp chuyển thẻ bài và dùng loại cáp nào?",
+      o: ["Cáp quang", "Cáp UTP", "Cáp đồng trục", "Cáp điện thoại"],
+      e: "Chuẩn FDDI dùng cáp quang và truyền tín hiệu theo phương pháp chuyển thẻ bài (Token Passing); đây là ví dụ mạng vòng vẫn còn được sử dụng."
+    },
+    {
+      l: 1,
+      q: "Thiết bị MAU (Multi station Access Unit) gắn với công nghệ mạng nào?",
+      o: ["Token Ring", "Ethernet Bus", "Wi-Fi 802.11", "Mạng di động 5G"],
+      e: "MAU là thiết bị trung tâm tạo lược đồ vật lý dạng Star cho Token Ring, trong khi lược đồ logic vẫn là vòng chuyển thẻ bài."
+    },
+    {
+      l: 1,
+      q: "Hiện tượng trên cùng một đường truyền xuất hiện hai tín hiệu khiến cả hai bị hỏng được gọi là gì?",
+      o: ["Xung đột (Collision)", "Suy hao tín hiệu", "Tắc nghẽn mạng", "Lặp vòng (Loop)"],
+      e: "Collision (đụng độ) xảy ra khi trên cùng một đường truyền có 2 tín hiệu, làm cả hai cùng bị hỏng – đặc trưng của topo Bus."
+    },
+    {
+      l: 1,
+      q: "Những thiết bị nào sau đây thường được tích hợp chung trong một thiết bị All-in-One của mạng LAN gia đình? (Chọn tất cả đáp án đúng)",
+      o: ["Router", "Access Point", "Switch", "Trạm BTS"],
+      m: [0, 1, 2],
+      e: "Modem, Router, Access Point, Switch thường được tích hợp 2/3/4 thiết bị trong một (All-in-One). Trạm BTS thuộc hạ tầng mạng di động của nhà mạng."
+    },
+    {
+      l: 1,
+      q: "Những loại mạng nào sau đây thuộc cách phân loại theo quy mô trong bài giảng? (Chọn tất cả đáp án đúng)",
+      o: ["PAN", "MAN", "VPN", "WSN"],
+      m: [0, 1],
+      e: "Theo quy mô có PAN, LAN, MAN, WAN. VPN và WSN là những dạng đặc biệt của mạng LAN, không phải một cấp quy mô."
+    },
+    {
+      l: 1,
+      q: "Theo bài giảng, mạng nội bộ RuNet đã thử nghiệm ngắt hoàn toàn kết nối với Internet toàn cầu (12/2019) thuộc quốc gia nào?",
+      o: ["Nga", "Trung Quốc", "Triều Tiên", "Iran"],
+      e: "Ngày 23/12/2019, chính phủ Nga tuyên bố thử nghiệm thành công việc ngắt kết nối giữa mạng nội bộ RuNet với Internet toàn cầu; RuNet trở thành mạng nội bộ lớn nhất thế giới."
+    },
+
+    // ===== THÔNG HIỂU (16) =====
+    {
+      l: 2,
+      q: "Vì sao topo Bus được coi là đã lỗi thời?",
+      o: [
+        "Chịu lỗi kém, khó bảo trì và phải dừng mạng khi mở rộng",
+        "Tốc độ truyền quá cao nên gây nhiễu cho thiết bị khác",
+        "Cần quá nhiều thiết bị trung tâm đắt tiền để vận hành",
+        "Không thể kết nối được quá hai máy trạm với nhau"
+      ],
+      e: "Bus dùng một đường cáp duy nhất: dễ xung đột, cáp đứt là cả mạng mất kết nối, khó tìm chỗ đứt, phải dừng mạng khi mở rộng/thu hẹp nên đã lỗi thời."
+    },
+    {
+      l: 2,
+      q: "Nhược điểm lớn nhất của topo Star là gì?",
+      o: [
+        "Thiết bị trung tâm hỏng thì các máy đều mất kết nối",
+        "Một nhánh cáp đứt làm toàn mạng ngừng hoạt động",
+        "Phải dừng toàn mạng mỗi khi thêm một máy trạm",
+        "Tín hiệu chỉ truyền được theo một chiều cố định"
+      ],
+      e: "Star phụ thuộc vào thiết bị trung tâm (Hub/Switch): nếu Switch hỏng thì các máy nối vào nó mất kết nối. Nhánh cáp đứt chỉ ảnh hưởng một máy; mở rộng không cần dừng mạng."
+    },
+    {
+      l: 2,
+      q: "Những phát biểu nào sau đây đúng về phương pháp chuyển thẻ bài (Token Passing)? (Chọn tất cả đáp án đúng)",
+      o: [
+        "Chỉ có duy nhất một token luân chuyển",
+        "Token luân chuyển theo một chiều",
+        "Trạm giữ token được phát trong thời hạn nhất định",
+        "Mọi trạm được phát đồng thời khi đường truyền rỗi"
+      ],
+      m: [0, 1, 2],
+      e: "Chỉ có một token luân chuyển theo một chiều; trạm nhận token mới có quyền phát trong thời hạn nhất định nên loại trừ xung đột. Phát đồng thời khi rỗi chính là nguyên nhân gây xung đột."
+    },
+    {
+      l: 2,
+      q: "Mạng truyền theo phương thức quảng bá (Broadcast) có đặc điểm nào?",
+      o: [
+        "Các trạm dùng chung kênh, một trạm phát thì tất cả đều nhận",
+        "Tín hiệu chỉ truyền giữa một máy phát và một máy thu",
+        "Mỗi cặp máy có một đường truyền vật lý riêng biệt",
+        "Tín hiệu phải qua Switch để tới đúng máy đích"
+      ],
+      e: "Broadcast: các trạm dùng chung một kênh, một trạm gửi thì tất cả nhận được (loa phường, vệ tinh, topo Bus, Ring). Truyền giữa một cặp phát – thu hay qua Switch là Point-to-Point."
+    },
+    {
+      l: 2,
+      q: "Trong mạng LAN gia đình, vì sao Router cần thực hiện chức năng NAT?",
+      o: [
+        "Để các thiết bị trong nhà kết nối được ra Internet",
+        "Để chuyển tín hiệu quang thành tín hiệu điện",
+        "Để phát sóng Wi-Fi cho điện thoại và laptop",
+        "Để cung cấp thêm cổng LAN cho máy tính bàn"
+      ],
+      e: "Router chuyển đổi địa chỉ mạng (NAT) để các thiết bị trong nhà kết nối được ra Internet. Ba phương án còn lại lần lượt là chức năng của Modem, Access Point, Switch."
+    },
+    {
+      l: 2,
+      q: "Phát biểu nào đúng về tính “trong suốt” trong nguyên lý phân tầng?",
+      o: [
+        "Mỗi tầng hoạt động như đang giao tiếp trực tiếp với tầng đồng mức bên kia",
+        "Dữ liệu đi trực tiếp giữa hai tầng đồng mức mà không qua các tầng dưới",
+        "Mỗi tầng phải biết chi tiết cách hoạt động của mọi tầng bên dưới nó",
+        "Các tầng dưới được phép đọc và sửa nội dung dữ liệu của tầng trên"
+      ],
+      e: "Nhờ sự trong suốt của các tầng dưới, mỗi tầng hoạt động “như thể” giao tiếp trực tiếp với tầng đồng mức; thực tế dữ liệu vẫn đi xuống tầng dưới rồi qua đường truyền."
+    },
+    {
+      l: 2,
+      q: "Nguyên lý phân tầng trong kiến trúc mạng ra đời chủ yếu nhằm mục đích gì?",
+      o: [
+        "Làm giảm độ phức tạp của việc thiết kế mạng",
+        "Tăng tốc độ truyền dữ liệu trên đường truyền",
+        "Giảm chi phí mua sắm các thiết bị mạng",
+        "Loại bỏ hoàn toàn lỗi khi truyền dữ liệu"
+      ],
+      e: "Phân tầng để làm giảm độ phức tạp cho việc thiết kế mạng: mỗi tầng cung cấp dịch vụ cho tầng trên, giải quyết một phần yêu cầu và chuyển phần còn lại xuống tầng dưới."
+    },
+    {
+      l: 2,
+      q: "Những nội dung nào thuộc phạm vi quy định của một giao thức mạng? (Chọn tất cả đáp án đúng)",
+      o: [
+        "Phương thức mã hóa dữ liệu và các mức tín hiệu",
+        "Cấu trúc của gói tin truyền trên mạng",
+        "Cách xử lý lỗi và thao tác với gói tin",
+        "Hãng sản xuất thiết bị được phép dùng"
+      ],
+      m: [0, 1, 2],
+      e: "Giao thức quy định phương thức mã hóa dữ liệu và mức tín hiệu, cấu trúc gói tin, cách xử lý lỗi và thao tác xử lý gói tin. Giao thức không quy định hãng sản xuất – các hãng khác nhau vẫn trao đổi được nếu cùng giao thức."
+    },
+    {
+      l: 2,
+      q: "Tầng Internet của mô hình TCP/IP tương ứng với tầng nào của mô hình OSI?",
+      o: [
+        "Tầng Mạng (Network)",
+        "Tầng Giao vận (Transport)",
+        "Tầng Liên kết dữ liệu",
+        "Tầng Phiên (Session)"
+      ],
+      e: "Tầng Internet của TCP/IP tương ứng tầng Network của OSI. Tầng Link của TCP/IP mới gộp Data Link và Physical."
+    },
+    {
+      l: 2,
+      q: "Phát biểu nào sau đây về VPN là <b>KHÔNG</b> đúng?",
+      o: [
+        "VPN phải lập đường truyền vật lý riêng",
+        "VPN là một dạng đặc biệt của mạng LAN",
+        "VPN được bảo mật bằng giao thức IPSec",
+        "VPN gồm loại client to site và site to site"
+      ],
+      e: "VPN KHÔNG lập đường truyền riêng mà sử dụng Internet, rồi mã hóa (IPSec...) để bảo mật. Đây là sai lầm hay gặp do nhầm chữ “riêng” trong “mạng riêng ảo”."
+    },
+    {
+      l: 2,
+      q: "Những ứng dụng nào sau đây là ứng dụng của mạng cảm biến không dây được nêu trong bài? (Chọn tất cả đáp án đúng)",
+      o: [
+        "Chống cháy rừng, camera an ninh",
+        "Nhà thông minh",
+        "Giao thông thông minh",
+        "Chia sẻ tệp qua BitTorrent"
+      ],
+      m: [0, 1, 2],
+      e: "WSN được ứng dụng trong chống cháy rừng, an ninh chống đột nhập, sản xuất nông – công nghiệp, nhà thông minh, giao thông thông minh. BitTorrent là ứng dụng mạng ngang hàng."
+    },
+    {
+      l: 2,
+      q: "Trong mạng thông tin di động, vì sao vùng địa lý được chia thành nhiều ô (cell)?",
+      o: [
+        "Mỗi ô có trạm BTS riêng, tín hiệu được chuyển tiếp khi người dùng di chuyển",
+        "Để mỗi người dùng có một đường cáp riêng nối thẳng tới tổng đài",
+        "Để thay thế hoàn toàn cho mạng vệ tinh trên phạm vi toàn quốc",
+        "Để các điện thoại giao tiếp trực tiếp với nhau, không cần trạm"
+      ],
+      e: "Mỗi ô có ít nhất một BTS; khi người dùng di chuyển qua các ô, tín hiệu được chuyển tiếp liên tục giữa các BTS nên cuộc gọi được chuyển vùng mà không mất."
+    },
+    {
+      l: 2,
+      q: "Theo khảo sát được nêu trong bài, lý do chính khiến phần lớn người tham gia chưa định dùng Starlink là gì?",
+      o: [
+        "Dịch vụ viễn thông mặt đất đã đáp ứng nhu cầu",
+        "Starlink chưa được cấp phép tại Việt Nam",
+        "Thiết bị Starlink không chịu được gió mạnh",
+        "Starlink chỉ phục vụ khách hàng doanh nghiệp"
+      ],
+      e: "74% trong số 8.500 người tham gia không dự định dùng Starlink vì dịch vụ viễn thông mặt đất đã đáp ứng nhu cầu. Starlink đã được cấp phép (2/2026), thiết bị chịu gió trên 96 km/h và có gói Gia đình."
+    },
+    {
+      l: 2,
+      q: "Đặc điểm nào của Hub khiến hiệu suất mạng bị giảm?",
+      o: [
+        "Phát lại gói tin ra tất cả các cổng",
+        "Ghi nhớ địa chỉ MAC ở từng cổng",
+        "Chỉ phát gói tin tới cổng đích",
+        "Cấp phát địa chỉ IP cho máy trạm"
+      ],
+      e: "Hub phát lại gói tin ra tất cả các cổng, không phân biệt cổng nào nên tăng xung đột, giảm hiệu suất. Ghi nhớ MAC và phát đúng cổng là ưu điểm của Switch."
+    },
+    {
+      l: 2,
+      q: "Những phát biểu nào đúng về mô hình mạng ngang hàng (Peer to Peer)? (Chọn tất cả đáp án đúng)",
+      o: [
+        "Không có sự hiện diện của server",
+        "Hai máy người dùng giao tiếp trực tiếp",
+        "Máy chủ hoạt động 24/7 phục vụ client",
+        "Phần mềm thuộc sở hữu một nhà cung cấp"
+      ],
+      m: [0, 1],
+      e: "P2P không có server, hai ứng dụng giao tiếp trực tiếp giữa hai PC và phần mềm không thuộc sở hữu của nhà cung cấp nào. Máy chủ 24/7 là đặc điểm của Client-Server."
+    },
+    {
+      l: 2,
+      q: "Trong lược đồ topo Star, đường cáp nối giữa các thiết bị trung tâm với nhau được gọi là gì?",
+      o: ["Cáp backbone (trục chính)", "Cáp nhánh tới máy trạm", "Cáp chéo (cross over)", "Cáp đồng trục mảnh"],
+      e: "Trong hình minh họa topo Star, các thiết bị trung tâm (Hub, Switch) được nối với nhau bằng cáp backbone; mỗi máy trạm có cáp nhánh riêng tới thiết bị trung tâm."
+    },
+
+    // ===== VẬN DỤNG (12) =====
+    {
+      l: 3,
+      q: "Cơ quan A có 3 tầng, mỗi tầng 20 máy, cần mạng dễ bảo trì, một cáp hỏng không ảnh hưởng máy khác và hạn chế xung đột. Phương án nào hợp lý nhất?",
+      o: [
+        "Topo Star, mỗi tầng một Switch nối về Switch trung tâm",
+        "Topo Bus với một đường cáp chạy qua cả ba tầng nhà",
+        "Topo Ring nối trực tiếp từng máy thành một vòng tròn",
+        "Mỗi tầng dùng một Hub nối thẳng tất cả các máy với nhau"
+      ],
+      e: "Star dễ bảo trì, một nhánh hỏng chỉ ảnh hưởng một máy; dùng Switch (không dùng Hub) để chỉ phát gói tới cổng đích, hạn chế xung đột; các Switch nối với nhau qua cáp backbone."
+    },
+    {
+      l: 3,
+      q: "Một quán cà phê đã có Modem và Router, muốn khách dùng điện thoại truy cập Internet mà không cần cắm dây. Cần bổ sung thiết bị nào?",
+      o: [
+        "Access Point phát sóng Wi-Fi",
+        "Switch cung cấp thêm cổng LAN",
+        "Hub phát gói tin ra mọi cổng",
+        "Trạm BTS riêng của quán"
+      ],
+      e: "Access Point phát sóng Wi-Fi để kết nối điện thoại, laptop. Switch và Hub chỉ kết nối bằng cáp; BTS là hạ tầng của nhà mạng di động."
+    },
+    {
+      l: 3,
+      q: "Nhà bạn Lan có cáp quang, 2 máy tính bàn cắm dây và 3 điện thoại dùng Wi-Fi. Những chức năng thiết bị nào cần có (riêng lẻ hoặc tích hợp All-in-One)? (Chọn tất cả đáp án đúng)",
+      o: ["Modem", "Access Point", "Switch", "Trạm BTS"],
+      m: [0, 1, 2],
+      e: "Cần Modem (chuyển tín hiệu quang → điện), Access Point (Wi-Fi cho điện thoại), Switch (cổng LAN cho máy bàn), cùng Router để ra Internet. Trạm BTS thuộc mạng di động, không lắp tại nhà."
+    },
+    {
+      l: 3,
+      q: "Một trường học muốn học sinh ở nhà truy cập kho học liệu đặt trong mạng nội bộ của trường một cách an toàn. Giải pháp phù hợp là gì?",
+      o: ["VPN client to site", "VPN site to site", "Mạng cảm biến không dây", "Topo Bus mở rộng"],
+      e: "Từng máy cá nhân ở xa truy cập vào LAN của trường là tình huống của VPN client to site. Site to site dùng khi nối nhiều mạng LAN (chi nhánh – trụ sở)."
+    },
+    {
+      l: 3,
+      q: "Hệ thống mạng nối các văn phòng của một tập đoàn đặt tại nhiều tỉnh thành, do tập đoàn quản lý, thuộc loại mạng nào?",
+      o: ["WAN xí nghiệp (Enterprise WAN)", "WAN công cộng (Internet)", "MAN đô thị (MAN-E)", "LAN mở rộng nhiều tầng"],
+      e: "Mạng diện rộng phục vụ riêng một doanh nghiệp, kết nối nhiều LAN ở nhiều tỉnh là WAN xí nghiệp. Internet là WAN công cộng; MAN chỉ trong phạm vi dưới 100 km."
+    },
+    {
+      l: 3,
+      q: "Một ứng dụng cho phép người dùng tải tệp trực tiếp từ máy của những người dùng khác, không qua máy chủ trung tâm. Ứng dụng này hoạt động theo mô hình nào?",
+      o: ["Peer to Peer", "Client-Server", "Broadcast", "Token Ring"],
+      e: "Hai máy người dùng giao tiếp trực tiếp, không qua server là mô hình ngang hàng (P2P), ví dụ BitTorrent."
+    },
+    {
+      l: 3,
+      q: "Bạn đặt hàng trên một website thương mại điện tử lúc 2 giờ sáng và đơn hàng vẫn được tiếp nhận ngay. Điều này thể hiện đặc điểm của mô hình nào?",
+      o: [
+        "Client-Server với máy chủ hoạt động 24/7",
+        "Peer to Peer với máy người bán luôn bật",
+        "Broadcast phát đơn hàng tới mọi máy",
+        "Mạng cá nhân PAN của người mua hàng"
+      ],
+      e: "Server của trang thương mại điện tử luôn thường trực (24/7) để xử lý yêu cầu xem hàng, đặt hàng từ client – đặc trưng của mô hình Client-Server."
+    },
+    {
+      l: 3,
+      q: "Hệ thống loa phường phát thông báo cho cả khu dân cư cùng nghe một lúc minh họa cho phương thức truyền nào?",
+      o: ["Broadcast", "Point-to-Point", "Client-Server", "Peer to Peer"],
+      e: "Một nguồn phát, tất cả cùng nhận trên kênh chung là Broadcast. Loa đồng bộ (truyền giữa hai đầu phát – thu) mới là Point-to-Point."
+    },
+    {
+      l: 3,
+      q: "Nhà mạng nâng cấp vòng Core Switch kết nối các trạm trong thành phố từ 10 Gbps lên 50 Gbps. Đây là nâng cấp cho loại mạng nào?",
+      o: ["MAN", "LAN", "PAN", "WSN"],
+      e: "Ví dụ MAN-E của VNPT Hà Nội: các Core Switch nối thành vòng Ring 10 Gbps, kế hoạch nâng lên Ring 50 Gbps – đây là mạng đô thị (MAN)."
+    },
+    {
+      l: 3,
+      q: "Một học sinh liên tục nhận tin nhắn đe dọa, bôi nhọ trên mạng xã hội. Tình huống này thuộc nhóm vấn đề nào?",
+      o: [
+        "Mặt trái của mạng đối với người dùng",
+        "Lợi ích chia sẻ tài nguyên phần mềm",
+        "Hạn chế về tốc độ của mạng có dây",
+        "Sự cố xung đột trên đường truyền Bus"
+      ],
+      e: "Bị bắt nạt qua mạng, tuyên truyền bôi nhọ danh dự cá nhân là các mặt trái của mạng đối với người dùng."
+    },
+    {
+      l: 3,
+      q: "Phòng thi trực tuyến yêu cầu tín hiệu ổn định, ít nhiễu và khó bị nghe trộm. Những lý do nào ủng hộ việc dùng mạng có dây? (Chọn tất cả đáp án đúng)",
+      o: [
+        "Tốc độ truyền nhanh hơn",
+        "Tín hiệu ổn định, ít bị nhiễu",
+        "Khó bị nghe trộm, phá sóng hơn",
+        "Tiện lợi khi di chuyển chỗ ngồi"
+      ],
+      m: [0, 1, 2],
+      e: "Mạng có dây nhanh hơn (Gbps), ổn định, ít nhiễu, khó bị nghe trộm/phá sóng hơn. Tiện lợi khi di chuyển là ưu điểm của mạng không dây."
+    },
+    {
+      l: 3,
+      q: "Một văn phòng 10 máy đang dùng Hub. Quản trị viên thay Hub bằng Switch. Những thay đổi nào sẽ xảy ra? (Chọn tất cả đáp án đúng)",
+      o: [
+        "Gói tin chỉ được phát tới cổng có máy đích",
+        "Xung đột giữa các gói tin giảm đi",
+        "Hiệu suất mạng được cải thiện",
+        "Topo mạng chuyển từ Star sang Ring"
+      ],
+      m: [0, 1, 2],
+      e: "Switch ghi nhớ MAC, chỉ phát gói tới cổng có thiết bị đích nên giảm xung đột, tăng hiệu suất. Topo vẫn là Star vì các máy vẫn nối về thiết bị trung tâm."
     }
   ]
 });
