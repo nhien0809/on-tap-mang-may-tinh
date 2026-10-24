@@ -37,7 +37,7 @@
       <div class="topbar-actions">
       <button class="btn btn-soft" id="mixBtnTop" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Đề tổng hợp</span>
+        <span>Ôn tổng hợp</span>
       </button>
       </div>
     </div>
@@ -51,7 +51,7 @@
           <div class="hero-text">
             <p class="eyebrow hero-eyebrow">Mạng máy tính · 7 chương</p>
             <h1>Luyện trắc nghiệm <br>theo từng chương, <em>nhẹ nhàng</em> mà chắc kiến thức</h1>
-            <p class="hero-lead">Mỗi chương 40 câu, đi từ nhận biết → thông hiểu → vận dụng theo tỉ lệ 3 · 4 · 3. Làm xong có điểm, có giải thích từng câu để ôn lại.</p>
+            <p class="hero-lead">Mỗi chương 80 câu chia thành 2 đề, đi từ nhận biết → thông hiểu → vận dụng theo tỉ lệ 3 · 4 · 3. Làm xong có điểm, có giải thích từng câu để ôn lại.</p>
             <ul class="hero-stats">
               <li><strong id="statTotal">280</strong><span>câu hỏi</span></li>
               <li><strong>3 · 4 · 3</strong><span>mức độ</span></li>
@@ -215,21 +215,45 @@
           <input type="radio" name="mode" value="exam">
           <span class="opt-card-in">
             <strong>Thi thử</strong>
-            <small>Tính giờ 40 phút, chấm điểm khi nộp bài</small>
+            <small>Không xem đáp án giữa chừng, chấm điểm khi nộp bài</small>
           </span>
         </label>
       </fieldset>
+
+      <fieldset class="choice" id="deChoice" hidden>
+        <legend>Chọn đề</legend>
+        <div class="de-grid" id="deList"></div>
+      </fieldset>
+
+      <div id="mixChoice" hidden>
+        <fieldset class="choice">
+          <legend>Chương <button class="linkish" id="mixAll" type="button">Chọn tất cả</button></legend>
+          <div class="chip-row" id="mixChapters"></div>
+        </fieldset>
+        <fieldset class="choice">
+          <legend>Số câu: <strong class="count-val" id="mixCountVal">40</strong> <span class="muted" id="mixMax"></span></legend>
+          <input type="range" id="mixCount" class="range" min="10" max="560" step="5" value="40" aria-label="Số câu">
+          <div class="chip-row" id="mixCountPresets">
+            <button class="chip-btn" type="button" data-n="20">20</button>
+            <button class="chip-btn" type="button" data-n="40">40</button>
+            <button class="chip-btn" type="button" data-n="60">60</button>
+            <button class="chip-btn" type="button" data-n="100">100</button>
+          </div>
+        </fieldset>
+      </div>
 
       <label class="field" id="scopeChoice" hidden>
         <span class="field-label">Phạm vi ôn tập</span>
         <select id="reviewScope" class="select"></select>
       </label>
 
-      <fieldset class="choice" id="countChoice" hidden>
-        <legend>Số câu</legend>
-        <div class="seg">
-          <label><input type="radio" name="count" value="quota" checked><span>40 câu ngẫu nhiên</span></label>
-          <label><input type="radio" name="count" value="all"><span id="countAllLabel">Toàn bộ</span></label>
+      <fieldset class="choice" id="timeChoice">
+        <legend>Thời gian làm bài</legend>
+        <div class="chip-row" id="timePresets"></div>
+        <div class="time-row">
+          <input type="number" id="timeInput" class="input input-num" min="0" max="300" step="5" value="0" aria-label="Số phút làm bài">
+          <span>phút</span>
+          <small class="muted" id="timeHint">Không giới hạn thời gian.</small>
         </div>
       </fieldset>
 
@@ -268,6 +292,12 @@
   <script src="data/ch5.js"></script>
   <script src="data/ch6.js"></script>
   <script src="data/ch7.js"></script>
+  <script src="data/ch2-de2.js"></script>
+  <script src="data/ch3-de2.js"></script>
+  <script src="data/ch4-de2.js"></script>
+  <script src="data/ch5-de2.js"></script>
+  <script src="data/ch6-de2.js"></script>
+  <script src="data/ch7-de2.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

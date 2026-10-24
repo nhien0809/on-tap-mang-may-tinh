@@ -18,7 +18,7 @@
   };
   const QUOTA_40 = { 1: 12, 2: 16, 3: 12 };
   const LETTERS = ["A", "B", "C", "D"];
-  const SECONDS_PER_Q = 60;
+  const DE_SIZE = 40; // mỗi đề 40 câu, câu hỏi trong ngân hàng xếp liền theo từng đề (12-16-12)
   const STORE_KEY = "onmang.best.v1";
   const WRONG_KEY = "onmang.wrong.v1";
 
@@ -127,7 +127,21 @@
     return { ...q, ch, id: ch + ":" + idx, t: multi ? "multi" : "single", ans: multi ? q.m.slice() : [0] };
   }
   function pickByQuota(pool, quota) {
-    return [1, 2, 3].flatMap((lv) => shuffle(pool.filter((q) => q.l === lv)).slice(0, quota[lv]));
+    const picked = [1, 2, 3].flatMap((lv) => shuffle(pool.filter((q) => q.l === lv)).slice(0, quota[lv]));
+    // nếu một mức thiếu câu thì bù bằng câu ngẫu nhiên còn lại
+    const want = quota[1] + quota[2] + quota[3];
+    if (picked.length < want) picked.push(...shuffle(pool.filter((q) => !picked.includes(q))).slice(0, want - picked.length));
+    return picked;
+  }
+  function quotaFor(n) {
+    const a = Math.round(n * 0.3), c = Math.round(n * 0.3);
+    return { 1: a, 2: n - a - c, 3: c };
+  }
+  const deCount = (c) => Math.ceil(c.questions.length / DE_SIZE);
+  function chapterBest(c) {
+    const keys = ["ch" + c.id + "-rand"];
+    for (let d = 1; d <= deCount(c); d++) keys.push("ch" + c.id + "-d" + d);
+    return keys.map((k) => store.best(k)).filter(Boolean).sort((a, b) => b.score - a.score)[0] || null;
   }
   /* ==========================================================
      HOME
@@ -172,16 +186,15 @@
     grid.appendChild(rv);
 
     CHAPTERS.forEach((c) => {
-      const best = store.best("ch" + c.id);
+      const best = chapterBest(c);
       const b = el("button", "ch-card");
       b.type = "button";
       b.dataset.key = "ch" + c.id;
-      const n = c.questions.length;
       b.innerHTML = cardHTML({
         no: "Chương " + pad2(c.id),
         title: c.title,
         topics: c.topics,
-        meta: n > 40 ? `Ngân hàng ${n} câu · đề 40 câu` : `${n} câu · 3-4-3`,
+        meta: `${deCount(c)} đề · ${c.questions.length} câu`,
         best
       });
       b.addEventListener("click", () => openSetup({ type: "chapter", chapter: c }));
@@ -192,10 +205,10 @@
     m.type = "button";
     m.dataset.key = "mix";
     m.innerHTML = cardHTML({
-      no: "Đề tổng hợp",
-      title: "Trộn cả 7 chương",
-      topics: "40 câu ngẫu nhiên từ toàn bộ ngân hàng, vẫn giữ tỉ lệ 12 nhận biết · 16 thông hiểu · 12 vận dụng.",
-      meta: "40 câu · ngẫu nhiên",
+      no: "Ôn tổng hợp",
+      title: "Trộn đề cả 7 chương",
+      topics: "Tự chọn chương, số câu và thời gian làm bài. Câu hỏi bốc ngẫu nhiên, vẫn giữ tỉ lệ nhận biết · thông hiểu · vận dụng 3-4-3.",
+      meta: `${totalQ} câu · tự chọn`,
       best: store.best("mix")
     });
     m.addEventListener("click", () => openSetup({ type: "mix" }));
@@ -203,7 +216,8 @@
 
     // thanh điểm cao nhất
     $$(".ch-card", grid).forEach((card) => {
-      const best = store.best(card.dataset.key);
+      const c = CHAPTERS.find((x) => "ch" + x.id === card.dataset.key);
+      const best = c ? chapterBest(c) : store.best(card.dataset.key);
       const bar = $(".ch-bar span", card);
       gsap.to(bar, { scaleX: best ? best.score / 10 : 0, duration: D(0.9), delay: D(0.25), ease: "power3.out" });
     });
@@ -237,16 +251,108 @@
   const setupModal = $("#setupModal");
   let pendingSetup = null;
 
+  let timeTouched = false;
+  const TIME_PRESETS = [0, 15, 30, 45, 60, 90];
+
+  // số câu sẽ có trong đề theo lựa chọn hiện tại
+  function setupQuestionCount() {
+    const src = pendingSetup;
+    if (!src) return 0;
+    if (src.type === "chapter") {
+      const de = $("input[name=de]:checked", setupModal);
+      const d = de ? de.value : "1";
+      if (d === "rand") return DE_SIZE;
+      return Math.min(DE_SIZE, src.chapter.questions.length - (Number(d) - 1) * DE_SIZE);
+    }
+    if (src.type === "mix") return Number($("#mixCount").value);
+    if (src.type === "review") {
+      const v = $("#reviewScope").value;
+      return wrongBook.count(v === "all" ? 0 : v);
+    }
+    return 0;
+  }
+  function setTime(min) {
+    $("#timeInput").value = min;
+    $$("#timePresets button").forEach((b) => b.classList.toggle("is-on", Number(b.dataset.min) === Number(min)));
+    $("#timeHint").textContent = Number(min) > 0 ? `Đồng hồ đếm ngược ${min} phút, hết giờ tự nộp bài.` : "Không giới hạn thời gian.";
+  }
+  function refreshSetup() {
+    const n = setupQuestionCount();
+    if (pendingSetup && pendingSetup.type === "mix") {
+      const q = quotaFor(n);
+      $("#setupMix").innerHTML = `<span class="lv lv1">${q[1]} Nhận biết</span><span class="lv lv2">${q[2]} Thông hiểu</span><span class="lv lv3">${q[3]} Vận dụng</span>`;
+    }
+    if (!timeTouched) {
+      const exam = $("input[name=mode]:checked", setupModal).value === "exam";
+      setTime(exam ? Math.max(5, n) : 0); // thi thử: mặc định 1 phút/câu
+    }
+    $("#startBtn").textContent = `Bắt đầu làm bài (${n} câu)`;
+    $("#startBtn").disabled = n === 0;
+  }
+  function mixPoolSize() {
+    return $$("#mixChapters input:checked").reduce((s, cb) => s + CHAPTERS.find((c) => c.id === Number(cb.value)).questions.length, 0);
+  }
+  function refreshMixRange() {
+    const max = mixPoolSize();
+    const r = $("#mixCount");
+    r.max = Math.max(10, max);
+    if (Number(r.value) > max) r.value = max;
+    $("#mixCountVal").textContent = r.value;
+    $("#mixMax").textContent = `tối đa ${max} câu`;
+    refreshSetup();
+  }
+
+  (function initSetupControls() {
+    const box = $("#mixChapters");
+    CHAPTERS.forEach((c) => {
+      const lab = el("label", "chip-check");
+      lab.innerHTML = `<input type="checkbox" value="${c.id}" checked><span>Chương ${c.id}</span>`;
+      lab.title = c.title;
+      box.appendChild(lab);
+    });
+    box.addEventListener("change", (e) => {
+      if (!$$("#mixChapters input:checked").length) e.target.checked = true; // luôn giữ ít nhất 1 chương
+      refreshMixRange();
+    });
+    $("#mixAll").addEventListener("click", () => { $$("#mixChapters input").forEach((cb) => (cb.checked = true)); refreshMixRange(); });
+    $("#mixCount").addEventListener("input", () => { $("#mixCountVal").textContent = $("#mixCount").value; refreshSetup(); });
+    $$("#mixCountPresets button").forEach((b) => b.addEventListener("click", () => {
+      const r = $("#mixCount");
+      r.value = Math.min(Number(b.dataset.n), Number(r.max));
+      $("#mixCountVal").textContent = r.value;
+      refreshSetup();
+    }));
+    const tp = $("#timePresets");
+    TIME_PRESETS.forEach((m) => {
+      const b = el("button", "chip-btn", m ? m + " phút" : "Không giới hạn");
+      b.type = "button";
+      b.dataset.min = m;
+      b.addEventListener("click", () => { timeTouched = true; setTime(m); });
+      tp.appendChild(b);
+    });
+    $("#timeInput").addEventListener("input", () => {
+      timeTouched = true;
+      const v = Math.max(0, Math.min(300, Math.round(Number($("#timeInput").value) || 0)));
+      $$("#timePresets button").forEach((b) => b.classList.toggle("is-on", Number(b.dataset.min) === v));
+      $("#timeHint").textContent = v > 0 ? `Đồng hồ đếm ngược ${v} phút, hết giờ tự nộp bài.` : "Không giới hạn thời gian.";
+    });
+    $$("input[name=mode]", setupModal).forEach((r) => r.addEventListener("change", refreshSetup));
+    $("#deList").addEventListener("change", refreshSetup);
+    $("#reviewScope").addEventListener("change", refreshSetup);
+  })();
+
   function openSetup(src) {
     pendingSetup = src;
-    const countBox = $("#countChoice");
+    timeTouched = false;
     $("#scopeChoice").hidden = src.type !== "review";
     $("#setupMix").hidden = src.type === "review";
+    $("#deChoice").hidden = src.type !== "chapter";
+    $("#mixChoice").hidden = src.type !== "mix";
+    $("#setupMix").innerHTML = '<span class="lv lv1">12 Nhận biết</span><span class="lv lv2">16 Thông hiểu</span><span class="lv lv3">12 Vận dụng</span>';
     if (src.type === "review") {
       $("#setupEyebrow").textContent = "Ôn câu sai";
       $("#setupTitle").textContent = "Sổ câu sai của bạn";
       $("#setupTopics").textContent = "Chọn phạm vi muốn ôn. Câu làm đúng sẽ được gạch khỏi sổ, câu làm sai tiếp tục được giữ lại.";
-      countBox.hidden = true;
       const sel = $("#reviewScope");
       sel.innerHTML = "";
       sel.appendChild(new Option(`Tất cả các chương (${wrongBook.count()} câu)`, "all"));
@@ -255,19 +361,32 @@
         if (n) sel.appendChild(new Option(`Chương ${c.id} · ${c.title} (${n} câu)`, c.id));
       });
     } else if (src.type === "chapter") {
-      const n = src.chapter.questions.length;
-      $("#setupEyebrow").textContent = "Chương " + pad2(src.chapter.id);
-      $("#setupTitle").textContent = src.chapter.title;
-      $("#setupTopics").textContent = src.chapter.topics;
-      countBox.hidden = n <= 40;
-      $("#countAllLabel").textContent = `Toàn bộ ${n} câu`;
-      $("input[name=count][value=quota]", setupModal).checked = true;
+      const c = src.chapter;
+      $("#setupEyebrow").textContent = "Chương " + pad2(c.id);
+      $("#setupTitle").textContent = c.title;
+      $("#setupTopics").textContent = c.topics;
+      const list = $("#deList");
+      list.innerHTML = "";
+      const opts = [];
+      for (let d = 1; d <= deCount(c); d++) {
+        const n = Math.min(DE_SIZE, c.questions.length - (d - 1) * DE_SIZE);
+        opts.push({ v: String(d), name: "Đề " + d, sub: n + " câu", best: store.best(`ch${c.id}-d${d}`) });
+      }
+      opts.push({ v: "rand", name: "Đề ngẫu nhiên", sub: `40 câu trộn từ ${c.questions.length} câu`, best: store.best(`ch${c.id}-rand`) });
+      opts.forEach((o, i) => {
+        const lab = el("label", "de-card");
+        lab.innerHTML = `<input type="radio" name="de" value="${o.v}" ${i === 0 ? "checked" : ""}>
+          <span class="de-card-in"><strong>${o.name}</strong><small>${o.sub}</small>
+          <em class="${o.best ? "" : "is-new"}">${o.best ? "Cao nhất " + fmtScore(o.best.score) : "Chưa làm"}</em></span>`;
+        list.appendChild(lab);
+      });
     } else {
-      $("#setupEyebrow").textContent = "Đề tổng hợp";
-      $("#setupTitle").textContent = "Trộn cả 7 chương";
-      $("#setupTopics").textContent = "40 câu chọn ngẫu nhiên từ " + totalQ + " câu của cả 7 chương.";
-      countBox.hidden = true;
+      $("#setupEyebrow").textContent = "Ôn tổng hợp";
+      $("#setupTitle").textContent = "Trộn đề cả 7 chương";
+      $("#setupTopics").textContent = "Chọn chương, số câu và thời gian. Câu hỏi được bốc ngẫu nhiên theo tỉ lệ 3-4-3.";
+      refreshMixRange();
     }
+    refreshSetup();
     showModal(setupModal);
   }
   $$("[data-close]", setupModal).forEach((b) => b.addEventListener("click", () => hideModal(setupModal)));
@@ -286,10 +405,16 @@
   $("#startBtn").addEventListener("click", async () => {
     const mode = $("input[name=mode]:checked", setupModal).value;
     const order = $("input[name=order]:checked", setupModal).value;
-    const count = $("input[name=count]:checked", setupModal).value;
-    if (pendingSetup.type === "review") pendingSetup = { ...pendingSetup, scope: $("#reviewScope").value };
+    const time = Math.max(0, Math.min(300, Math.round(Number($("#timeInput").value) || 0)));
+    const extra = {};
+    if (pendingSetup.type === "review") extra.scope = $("#reviewScope").value;
+    if (pendingSetup.type === "chapter") extra.de = $("input[name=de]:checked", setupModal).value;
+    if (pendingSetup.type === "mix") {
+      extra.chapters = $$("#mixChapters input:checked").map((cb) => Number(cb.value));
+      extra.n = Number($("#mixCount").value);
+    }
     await hideModal(setupModal);
-    startQuiz({ ...pendingSetup, mode, order, count });
+    startQuiz({ ...pendingSetup, ...extra, mode, order, time });
   });
 
   // --- confirm ---
@@ -352,15 +477,20 @@
     let pool;
     if (cfg.type === "chapter") {
       pool = cfg.chapter.questions.map((q, i) => normalize(q, cfg.chapter.id, i));
-      if (cfg.count !== "all" && pool.length > 40) pool = pickByQuota(pool, QUOTA_40);
+      if (cfg.de === "rand") pool = pickByQuota(pool, QUOTA_40);
+      else {
+        const d = Number(cfg.de || 1) - 1;
+        pool = pool.slice(d * DE_SIZE, (d + 1) * DE_SIZE);
+      }
     } else if (cfg.type === "review") {
       pool = wrongBook.ids(cfg.scope === "all" ? 0 : cfg.scope).map(questionById).filter(Boolean);
     } else if (cfg.type === "retry") {
       pool = cfg.pool;
     } else {
       const all = [];
-      CHAPTERS.forEach((c) => c.questions.forEach((q, i) => all.push(normalize(q, c.id, i))));
-      pool = pickByQuota(all, QUOTA_40);
+      const chs = cfg.chapters && cfg.chapters.length ? cfg.chapters : CHAPTERS.map((c) => c.id);
+      CHAPTERS.filter((c) => chs.includes(c.id)).forEach((c) => c.questions.forEach((q, i) => all.push(normalize(q, c.id, i))));
+      pool = pickByQuota(all, quotaFor(Math.min(cfg.n || 40, all.length)));
     }
     const ordered = cfg.order === "random"
       ? shuffle(pool)
@@ -377,14 +507,22 @@
     lastConfig = cfg;
     const items = buildItems(cfg);
     const meta = {
-      chapter: { key: "ch" + (cfg.chapter && cfg.chapter.id), eyebrow: "Chương " + pad2(cfg.chapter ? cfg.chapter.id : 0), title: cfg.chapter && cfg.chapter.title },
-      mix: { key: "mix", eyebrow: "Đề tổng hợp", title: "Trộn cả 7 chương" },
+      chapter: {
+        key: cfg.chapter && `ch${cfg.chapter.id}-${cfg.de === "rand" ? "rand" : "d" + (cfg.de || 1)}`,
+        eyebrow: "Chương " + pad2(cfg.chapter ? cfg.chapter.id : 0) + " · " + (cfg.de === "rand" ? "Đề ngẫu nhiên" : "Đề " + (cfg.de || 1)),
+        title: cfg.chapter && cfg.chapter.title
+      },
+      mix: {
+        key: "mix",
+        eyebrow: "Ôn tổng hợp",
+        title: cfg.chapters && cfg.chapters.length < CHAPTERS.length ? "Chương " + cfg.chapters.join(", ") : "Trộn cả 7 chương"
+      },
       review: { key: null, eyebrow: "Ôn câu sai", title: cfg.scope === "all" || !cfg.scope ? "Sổ câu sai · tất cả chương" : "Sổ câu sai · Chương " + cfg.scope },
       retry: { key: null, eyebrow: "Làm lại câu sai", title: cfg.title }
     }[cfg.type];
     S = {
       cfg,
-      key: cfg.type === "chapter" && cfg.count === "all" ? null : meta.key,
+      key: meta.key,
       eyebrow: meta.eyebrow,
       title: meta.title,
       items,
@@ -393,7 +531,8 @@
       idx: 0,
       mode: cfg.mode,
       startedAt: Date.now(),
-      remaining: items.length * SECONDS_PER_Q,
+      remaining: (cfg.time || 0) * 60,
+      limit: (cfg.time || 0) > 0,
       timerId: null,
       done: false
     };
@@ -417,7 +556,7 @@
   function setupTimer() {
     clearInterval(S && S.timerId);
     const t = $("#qzTimer");
-    if (S.mode !== "exam") { t.hidden = true; return; }
+    if (!S.limit) { t.hidden = true; return; }
     t.hidden = false;
     t.classList.remove("is-low");
     t.textContent = fmtTime(S.remaining);
@@ -661,7 +800,7 @@
     });
   }
   $("#brandLink").addEventListener("click", (e) => { e.preventDefault(); if (currentView !== "quiz") goHome(); });
-  $("#mixBtnTop").addEventListener("click", () => openSetup({ type: "mix" }));
+  $("#mixBtnTop").addEventListener("click", () => { if (currentView !== "quiz") openSetup({ type: "mix" }); });
 
   // bàn phím
   document.addEventListener("keydown", (e) => {
@@ -852,7 +991,7 @@
   $("#retryWrongBtn").addEventListener("click", () => {
     const pool = R.items.filter((_, i) => !isRight(R, i)).map((it) => it.q);
     if (!pool.length) return;
-    startQuiz({ type: "retry", pool, mode: "practice", order: "level", title: R.title });
+    startQuiz({ type: "retry", pool, mode: "practice", order: "level", time: 0, title: R.title });
   });
   $("#homeBtn").addEventListener("click", goHome);
 
