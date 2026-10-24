@@ -20,9 +20,6 @@
   const LETTERS = ["A", "B", "C", "D"];
   const SECONDS_PER_Q = 60;
   const STORE_KEY = "onmang.best.v1";
-  const MISTAKE_KEY = "onmang.mistakes.v1";
-  const AI_KEY = "onmang.ai.settings.v1";
-  const AI_LAST_KEY = "onmang.ai.last.v1";
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -31,7 +28,6 @@
     arrow: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     cross: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>',
-    spark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" fill="currentColor"/></svg>',
     next: '<span>Câu tiếp</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
 
@@ -69,24 +65,6 @@
     }
   };
 
-  // Sổ lỗi sai: câu đã chọn sai -> lưu lại để AI soạn câu biến tấu
-  const mistakes = {
-    all() { return readJSON(MISTAKE_KEY, []); },
-    byChapter(ch) { return this.all().filter((m) => m.ch === ch); },
-    count(ch) { return ch ? this.byChapter(ch).length : this.all().length; },
-    update(records) {
-      let list = this.all();
-      records.forEach((r) => {
-        const i = list.findIndex((m) => m.q === r.q);
-        if (r.right) { if (i >= 0) list.splice(i, 1); return; } // làm đúng rồi thì gạch khỏi sổ
-        const rec = { ch: r.ch, l: r.l, q: r.q, wrong: r.wrong, right: r.rightTexts, n: 1, at: Date.now() };
-        if (i >= 0) { rec.n = list[i].n + 1; list.splice(i, 1); }
-        list.unshift(rec);
-      });
-      writeJSON(MISTAKE_KEY, list.slice(0, 200));
-    }
-  };
-
   /* ---------- helpers ---------- */
   function shuffle(arr) {
     const a = arr.slice();
@@ -114,13 +92,6 @@
     return n;
   }
   const pad2 = (n) => String(n).padStart(2, "0");
-  const stripTags = (s) => String(s).replace(/<[^>]*>/g, "");
-  // Chỉ giữ lại thẻ <b> (dùng cho nội dung do AI sinh ra)
-  function safeHTML(s) {
-    return String(s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/&lt;(\/?)b&gt;/gi, "<$1b>");
-  }
   const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
 
   // Chuẩn hóa câu hỏi: ans = chỉ số (gốc) các phương án đúng
@@ -131,23 +102,18 @@
   function pickByQuota(pool, quota) {
     return [1, 2, 3].flatMap((lv) => shuffle(pool.filter((q) => q.l === lv)).slice(0, quota[lv]));
   }
-  function quotaFor(n) {
-    const a = Math.round(n * 0.3), c = Math.round(n * 0.3);
-    return { 1: a, 2: n - a - c, 3: c };
-  }
-
   /* ==========================================================
      HOME
      ========================================================== */
   const totalQ = CHAPTERS.reduce((s, c) => s + c.questions.length, 0);
   $("#statTotal").textContent = totalQ;
 
-  function cardHTML({ no, title, topics, meta, best, badge }) {
-    const tag = badge != null ? badge : best ? "Cao nhất " + fmtScore(best.score) : "Chưa làm";
+  function cardHTML({ no, title, topics, meta, best }) {
+    const tag = best ? "Cao nhất " + fmtScore(best.score) : "Chưa làm";
     return `
       <div class="ch-top">
         <span class="ch-no">${no}</span>
-        <span class="ch-best ${best || badge ? "" : "is-new"}">${tag}</span>
+        <span class="ch-best ${best ? "" : "is-new"}">${tag}</span>
       </div>
       <h3>${title}</h3>
       <p class="ch-topics">${topics}</p>
@@ -161,20 +127,6 @@
   function renderHome() {
     const grid = $("#chGrid");
     grid.innerHTML = "";
-
-    const ai = el("button", "ch-card is-ai");
-    ai.type = "button";
-    ai.dataset.key = "ai";
-    const nm = mistakes.count();
-    ai.innerHTML = cardHTML({
-      no: "Luyện cùng AI",
-      title: "Đề mới do AI biến tấu",
-      topics: "AI soạn câu hỏi mới theo chương, nhắm vào đúng những câu bạn từng làm sai và đổi cách hỏi để bạn không học vẹt.",
-      meta: nm ? `Sổ lỗi sai: ${nm} câu` : "Chưa có lỗi sai nào",
-      badge: "Mới ✦"
-    });
-    ai.addEventListener("click", () => openAi());
-    grid.appendChild(ai);
 
     CHAPTERS.forEach((c) => {
       const best = store.best("ch" + c.id);
@@ -291,7 +243,7 @@
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && openModalEl) {
       if (openModalEl === confirmModal) closeConfirm(false);
-      else if (!aiBusy) hideModal(openModalEl);
+      else hideModal(openModalEl);
     }
   });
 
@@ -330,8 +282,6 @@
     if (cfg.type === "chapter") {
       pool = cfg.chapter.questions.map((q) => normalize(q, cfg.chapter.id));
       if (cfg.count !== "all" && pool.length > 40) pool = pickByQuota(pool, QUOTA_40);
-    } else if (cfg.type === "ai") {
-      pool = cfg.questions.map((q) => normalize(q, cfg.chapter.id));
     } else {
       const all = [];
       CHAPTERS.forEach((c) => c.questions.forEach((q) => all.push(normalize(q, c.id))));
@@ -353,7 +303,6 @@
     const items = buildItems(cfg);
     const meta = {
       chapter: { key: "ch" + (cfg.chapter && cfg.chapter.id), eyebrow: "Chương " + pad2(cfg.chapter ? cfg.chapter.id : 0), title: cfg.chapter && cfg.chapter.title },
-      ai: { key: null, eyebrow: "Đề AI · Chương " + pad2(cfg.chapter ? cfg.chapter.id : 0), title: cfg.chapter && cfg.chapter.title },
       mix: { key: "mix", eyebrow: "Đề tổng hợp", title: "Trộn cả 7 chương" }
     }[cfg.type];
     S = {
@@ -455,7 +404,7 @@
       lvEl.className = "lv " + lv.cls;
       lvEl.textContent = lv.name + (S.cfg.type === "mix" ? " · Chương " + it.q.ch : "");
       $("#qMulti").hidden = !multi;
-      $("#qText").innerHTML = S.cfg.type === "ai" ? safeHTML(it.q.q) : it.q.q;
+      $("#qText").innerHTML = it.q.q;
 
       const box = $("#qOpts");
       box.innerHTML = "";
@@ -528,7 +477,7 @@
     const letters = it.correct.map((k) => LETTERS[k]).join(", ");
     fb.className = "feedback " + (right ? "ok" : "bad");
     fb.innerHTML = `<p class="feedback-title">${right ? ICON.check + "Chính xác!" : ICON.cross + (multi ? "Chưa đúng — các đáp án đúng là " : "Chưa đúng — đáp án đúng là ") + letters}</p><p></p>`;
-    $("p:last-child", fb).innerHTML = S.cfg.type === "ai" ? safeHTML(it.q.e) : it.q.e;
+    $("p:last-child", fb).innerHTML = it.q.e;
     fb.hidden = false;
 
     if (animate) {
@@ -636,7 +585,6 @@
   }
   $("#brandLink").addEventListener("click", (e) => { e.preventDefault(); if (currentView !== "quiz") goHome(); });
   $("#mixBtnTop").addEventListener("click", () => openSetup({ type: "mix" }));
-  $("#aiBtnTop").addEventListener("click", () => openAi());
 
   // bàn phím
   document.addEventListener("keydown", (e) => {
@@ -666,21 +614,11 @@
     const total = S.items.length;
     const perLv = { 1: [0, 0], 2: [0, 0], 3: [0, 0] };
     let right = 0;
-    const records = [];
     S.items.forEach((it, i) => {
       const ok = isRight(S, i);
       perLv[it.q.l][1]++;
       if (ok) { right++; perLv[it.q.l][0]++; }
-      const ans = S.answers[i];
-      if (ans !== null) {
-        records.push({
-          ch: it.q.ch, l: it.q.l, q: stripTags(it.q.q), right: ok,
-          wrong: ans.map((k) => it.q.o[it.perm[k]]),
-          rightTexts: it.q.ans.map((o) => it.q.o[o])
-        });
-      }
     });
-    mistakes.update(records);
     const score = (right / total) * 10;
     if (S.key) store.save(S.key, score);
     R = { ...S, right, total, score, perLv, timeUp, spent: (Date.now() - S.startedAt) / 1000 };
@@ -701,8 +639,6 @@
     $("#rMsg").textContent = R.timeUp ? "Hết giờ! Bài đã được nộp tự động" : resultMessage(R.score);
     $("#rSub").textContent = `Đúng ${R.right}/${R.total} câu · Thời gian ${fmtDuration(R.spent)}`;
     $("#rScore").textContent = "0";
-    const wrongN = R.total - R.right;
-    $("#aiFromResultBtn").hidden = wrongN === 0 || !R.cfg.chapter;
 
     const lvBox = $("#rLevels");
     lvBox.innerHTML = "";
@@ -778,7 +714,6 @@
   function renderReview() {
     const list = $("#reviewList");
     list.innerHTML = "";
-    const fromAi = R.cfg.type === "ai";
     let shown = 0;
     R.items.forEach((it, i) => {
       const ans = R.answers[i] || [];
@@ -800,7 +735,7 @@
         <p class="rv-q"></p>
         <ul class="rv-opts"></ul>
         <p class="rv-exp"><strong>Giải thích: </strong><span></span></p>`;
-      $(".rv-q", card).innerHTML = fromAi ? safeHTML(it.q.q) : it.q.q;
+      $(".rv-q", card).innerHTML = it.q.q;
       const ul = $(".rv-opts", card);
       it.perm.forEach((orig, k) => {
         const li = el("li", it.correct.includes(k) ? "c" : ans.includes(k) ? "x" : "");
@@ -808,7 +743,7 @@
         $("span", li).textContent = it.q.o[orig];
         ul.appendChild(li);
       });
-      $(".rv-exp span", card).innerHTML = fromAi ? safeHTML(it.q.e) : it.q.e;
+      $(".rv-exp span", card).innerHTML = it.q.e;
       list.appendChild(card);
     });
     if (!shown) list.appendChild(el("div", "empty", reviewFilter === "wrong" ? "Không có câu sai nào — quá đỉnh! ✿" : "Chưa có câu đúng nào ở lượt này."));
@@ -831,260 +766,6 @@
   });
   $("#retryBtn").addEventListener("click", () => { if (lastConfig) startQuiz(lastConfig); });
   $("#homeBtn").addEventListener("click", goHome);
-  $("#aiFromResultBtn").addEventListener("click", () => openAi(R.cfg.chapter && R.cfg.chapter.id));
-
-  /* ==========================================================
-     AI — soạn đề mới từ lỗi sai cũ + biến tấu câu hỏi
-     Gọi Claude API trực tiếp từ trình duyệt bằng API key của người dùng.
-     ========================================================== */
-  const aiModal = $("#aiModal");
-  let aiBusy = false;
-  const AI_MODELS = {
-    "claude-opus-5-5": "Claude Opus 5.5 — chất lượng cao nhất",
-    "claude-sonnet-5-5": "Claude Sonnet 5.5 — cân bằng",
-    "claude-haiku-5-5": "Claude Haiku 5.5 — nhanh, rẻ nhất"
-  };
-  const aiSettings = () => readJSON(AI_KEY, { key: "", model: "claude-opus-5-5" });
-
-  (function initAiForm() {
-    const sel = $("#aiChapter");
-    CHAPTERS.forEach((c) => sel.appendChild(new Option(`Chương ${c.id} · ${c.title}`, c.id)));
-    const msel = $("#aiModel");
-    Object.entries(AI_MODELS).forEach(([id, label]) => msel.appendChild(new Option(label, id)));
-    sel.addEventListener("change", refreshAiMistakes);
-    $$("[data-close]", aiModal).forEach((b) => b.addEventListener("click", () => { if (!aiBusy) hideModal(aiModal); }));
-    $("#aiKeyToggle").addEventListener("click", () => {
-      const inp = $("#aiKey");
-      inp.type = inp.type === "password" ? "text" : "password";
-    });
-    $("#aiForget").addEventListener("click", () => {
-      writeJSON(AI_KEY, { key: "", model: $("#aiModel").value });
-      $("#aiKey").value = "";
-      setAiStatus("Đã xóa API key khỏi trình duyệt này.", "");
-    });
-    $("#aiGenBtn").addEventListener("click", generateWithAi);
-    $("#aiLastBtn").addEventListener("click", async () => {
-      const last = readJSON(AI_LAST_KEY, null);
-      const ch = last && CHAPTERS.find((c) => c.id === last.ch);
-      if (!ch) return;
-      const mode = $("input[name=aimode]:checked", aiModal).value;
-      await hideModal(aiModal);
-      startQuiz({ type: "ai", chapter: ch, questions: last.questions, mode, order: "level" });
-    });
-  })();
-
-  function refreshAiMistakes() {
-    const ch = Number($("#aiChapter").value);
-    const n = mistakes.count(ch);
-    const box = $("#aiUseMistakes");
-    box.disabled = n === 0;
-    box.checked = n > 0;
-    $("#aiMistakeInfo").textContent = n
-      ? `Sổ lỗi sai chương ${ch} đang có ${n} câu — AI sẽ hỏi lại đúng những chỗ bạn hay nhầm.`
-      : `Chương ${ch} chưa có lỗi sai nào. Hãy làm thử đề chương này trước, hoặc để AI biến tấu từ ngân hàng câu hỏi.`;
-  }
-
-  function setAiStatus(text, kind) {
-    const s = $("#aiStatus");
-    s.textContent = text;
-    s.className = "ai-status" + (kind ? " is-" + kind : "");
-    s.hidden = !text;
-  }
-
-  function openAi(chId) {
-    const st = aiSettings();
-    $("#aiKey").value = st.key || "";
-    $("#aiModel").value = AI_MODELS[st.model] ? st.model : "claude-opus-5-5";
-    if (chId) $("#aiChapter").value = String(chId);
-    refreshAiMistakes();
-    const last = readJSON(AI_LAST_KEY, null);
-    $("#aiLastBtn").hidden = !last;
-    if (last) $("#aiLastBtn").textContent = `Làm lại đề AI gần nhất (Chương ${last.ch}, ${last.questions.length} câu)`;
-    $("#aiSettingsBox").open = !st.key;
-    setAiStatus("", "");
-    showModal(aiModal);
-  }
-
-  const CRITERIA = `Bạn là chuyên gia nhiều năm kinh nghiệm giảng dạy đại học chuyên ngành Lí luận và phương pháp dạy học môn Tin học. Bạn soạn câu hỏi trắc nghiệm kiểm tra – đánh giá sinh viên năm thứ 3 về môn Mạng máy tính, bám sát nguồn kiến thức được cung cấp.
-
-Tiêu chí bắt buộc:
-1. Câu hỏi logic, câu từ chọn lọc, cấu trúc đầy đủ (một câu hỏi hoàn chỉnh, không bỏ lửng).
-2. Câu hỏi phủ định: từ phủ định viết IN HOA và bọc trong thẻ <b>…</b>, ví dụ "…là <b>KHÔNG</b> đúng?". Ngoài thẻ <b> không dùng bất kỳ thẻ HTML nào khác.
-3. Mỗi câu có đúng 4 phương án. Dạng "single": đúng 1 phương án đúng. Dạng "multi" (chọn các đáp án đúng): 2 hoặc 3 phương án đúng, và câu hỏi kết thúc bằng "(Chọn tất cả đáp án đúng)".
-4. Các phương án logic, không làm lộ đáp án; phương án đúng và phương án nhiễu có độ dài tương đương – không để phương án đúng là phương án dài nhất hay chi tiết nhất.
-5. Không dùng các phương án "Tất cả đều đúng", "Tất cả đều sai", "Cả A và B", "Không có phương án nào".
-6. Phương án nhiễu phải xây dựng từ sai lầm thường gặp của sinh viên (nhầm khái niệm gần nhau, nhầm số liệu, nhầm thiết bị/tầng, đảo chiều quan hệ…), không đưa phương án vô lý.
-7. Mức độ: 1 = Nhận biết (nhớ khái niệm, số liệu), 2 = Thông hiểu (giải thích, so sánh, phân biệt), 3 = Vận dụng (tình huống thực tế, tính toán, chọn giải pháp). Tạo đúng số lượng từng mức được yêu cầu.
-8. Chỉ dùng kiến thức có trong nguồn được cung cấp; không bịa số liệu, không đưa kiến thức ngoài nguồn.
-9. Biến tấu: không chép nguyên văn câu hỏi trong nguồn; đổi ngữ cảnh, tình huống, số liệu, đổi góc hỏi (xuôi ↔ ngược, khẳng định ↔ phủ định, chọn một ↔ chọn nhiều).
-10. explanation: 1–3 câu tiếng Việt, nêu vì sao đáp án đúng và chỉ ra sai lầm ở phương án nhiễu tiêu biểu.
-11. correct là mảng chỉ số (0–3) của các phương án đúng trong mảng options. Phân tán vị trí đáp án đúng, không dồn vào một vị trí.`;
-
-  const AI_SCHEMA = {
-    type: "object",
-    properties: {
-      questions: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            level: { type: "integer", enum: [1, 2, 3] },
-            type: { type: "string", enum: ["single", "multi"] },
-            question: { type: "string" },
-            options: { type: "array", items: { type: "string" } },
-            correct: { type: "array", items: { type: "integer" } },
-            explanation: { type: "string" },
-            targets_mistake: { type: "boolean" }
-          },
-          required: ["level", "type", "question", "options", "correct", "explanation", "targets_mistake"],
-          additionalProperties: false
-        }
-      }
-    },
-    required: ["questions"],
-    additionalProperties: false
-  };
-
-  function buildAiPrompt(ch, n, useMistakes) {
-    const q = quotaFor(n);
-    const kb = ch.questions.map((x) => {
-      const nx = normalize(x, ch.id);
-      const right = nx.ans.map((i) => x.o[i]).join(" | ");
-      return `- [${LEVELS[x.l].name}] ${stripTags(x.q)}\n  Đáp án đúng: ${right}\n  Giải thích: ${stripTags(x.e)}`;
-    }).join("\n");
-    const ms = useMistakes ? mistakes.byChapter(ch.id).slice(0, 20) : [];
-    const msText = ms.length
-      ? ms.map((m) => `- Câu: ${m.q}\n  Sinh viên đã chọn: ${m.wrong.join(" | ")}\n  Đáp án đúng: ${m.right.join(" | ")}${m.n > 1 ? `\n  (đã sai ${m.n} lần)` : ""}`).join("\n")
-      : "";
-    const multiN = Math.max(1, Math.round(n * 0.25));
-
-    let task = `YÊU CẦU: Soạn ${n} câu hỏi mới cho chương này: ${q[1]} câu Nhận biết, ${q[2]} câu Thông hiểu, ${q[3]} câu Vận dụng. Khoảng ${multiN} câu dạng "multi", còn lại dạng "single".`;
-    if (ms.length) {
-      task += ` Ít nhất một nửa số câu phải nhắm đúng vào các sai lầm trong mục LỖI SAI CŨ: hỏi lại chính kiến thức đó nhưng bằng tình huống/cách hỏi khác, và dùng lựa chọn sai của sinh viên (hoặc biến thể của nó) làm phương án nhiễu. Đặt targets_mistake = true cho những câu này, false cho các câu còn lại.`;
-    } else {
-      task += ` Đặt targets_mistake = false cho mọi câu.`;
-    }
-
-    const user = `NGUỒN KIẾN THỨC – Chương ${ch.id}: ${ch.title}\n(Ngân hàng câu hỏi hiện có kèm đáp án và giải thích; dùng làm nguồn kiến thức, KHÔNG chép nguyên văn)\n${kb}\n\n`
-      + (ms.length ? `LỖI SAI CŨ CỦA SINH VIÊN (chương ${ch.id}):\n${msText}\n\n` : "")
-      + task;
-    return { system: CRITERIA, user, quota: q };
-  }
-
-  // Kiểm tra từng câu AI trả về; chuyển sang định dạng dữ liệu của app
-  function validateAiQuestions(raw) {
-    const out = [];
-    (raw || []).forEach((x) => {
-      if (!x || ![1, 2, 3].includes(x.level)) return;
-      const o = (x.options || []).map((s) => String(s).trim());
-      if (o.length !== 4 || o.some((s) => !s) || new Set(o).size !== 4) return;
-      const c = [...new Set((x.correct || []).filter((i) => Number.isInteger(i) && i >= 0 && i < 4))];
-      const multi = x.type === "multi";
-      if (multi ? c.length < 2 || c.length > 3 : c.length !== 1) return;
-      if (/tất cả (đều|các) (đúng|sai)|cả a và b/i.test(o.join(" "))) return;
-      const item = { l: x.level, q: String(x.question).trim(), e: String(x.explanation || "").trim(), ai: true, tm: !!x.targets_mistake };
-      if (multi) { item.o = o; item.m = c; }
-      else item.o = [o[c[0]], ...o.filter((_, i) => i !== c[0])]; // đáp án đúng về vị trí 0
-      out.push(item);
-    });
-    return out;
-  }
-
-  async function generateWithAi() {
-    if (aiBusy) return;
-    const key = $("#aiKey").value.trim();
-    const model = $("#aiModel").value;
-    if (!key) {
-      $("#aiSettingsBox").open = true;
-      setAiStatus("Bạn cần nhập API key của Anthropic trước (lấy tại console.anthropic.com).", "err");
-      $("#aiKey").focus();
-      return;
-    }
-    writeJSON(AI_KEY, { key, model });
-
-    const ch = CHAPTERS.find((c) => c.id === Number($("#aiChapter").value));
-    const n = Number($("input[name=ainum]:checked", aiModal).value);
-    const mode = $("input[name=aimode]:checked", aiModal).value;
-    const useMistakes = $("#aiUseMistakes").checked;
-    const { system, user } = buildAiPrompt(ch, n, useMistakes);
-
-    aiBusy = true;
-    const btn = $("#aiGenBtn");
-    btn.disabled = true;
-    btn.classList.add("is-loading");
-    const t0 = Date.now();
-    let made = 0;
-    const tick = setInterval(() => {
-      const s = Math.round((Date.now() - t0) / 1000);
-      setAiStatus(made ? `Đang soạn… đã xong khoảng ${made}/${n} câu (${s}s)` : `AI đang đọc kiến thức và suy nghĩ… (${s}s) — thường mất 30–120 giây.`, "busy");
-    }, 500);
-
-    let Anthropic;
-    try {
-      ({ default: Anthropic } = await import("https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm"));
-    } catch (e) {
-      clearInterval(tick); aiBusy = false; btn.disabled = false; btn.classList.remove("is-loading");
-      setAiStatus("Không tải được thư viện AI. Kiểm tra kết nối mạng rồi thử lại.", "err");
-      return;
-    }
-
-    try {
-      const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true });
-      const params = {
-        model,
-        max_tokens: 64000,
-        system,
-        messages: [{ role: "user", content: user }],
-        output_config: { effort: "medium", format: { type: "json_schema", schema: AI_SCHEMA } }
-      };
-      // Opus/Sonnet: bật fallback phía server khi bị bộ lọc an toàn từ chối nhầm
-      if (model !== "claude-haiku-5-5") {
-        params.betas = ["server-side-fallback-2026-07-01"];
-        params.fallbacks = "default";
-      }
-      const stream = client.beta.messages.stream(params);
-      let acc = "";
-      stream.on("text", (delta) => {
-        acc += delta;
-        made = (acc.match(/"explanation"\s*:/g) || []).length;
-      });
-      const msg = await stream.finalMessage();
-
-      if (msg.stop_reason === "refusal") throw new Error("AI đã từ chối yêu cầu này. Hãy thử lại hoặc chọn mô hình khác.");
-      if (msg.stop_reason === "max_tokens") throw new Error("Câu trả lời bị cắt giữa chừng. Hãy giảm số câu rồi thử lại.");
-      const text = msg.content.filter((b) => b.type === "text").map((b) => b.text).join("");
-      const data = JSON.parse(text);
-      const qs = validateAiQuestions(data.questions);
-      if (qs.length < Math.ceil(n / 2)) throw new Error("AI trả về quá ít câu hợp lệ. Hãy thử tạo lại.");
-
-      writeJSON(AI_LAST_KEY, { ch: ch.id, questions: qs, at: Date.now() });
-      clearInterval(tick);
-      setAiStatus(`Đã tạo ${qs.length} câu.`, "ok");
-      aiBusy = false;
-      await hideModal(aiModal);
-      startQuiz({ type: "ai", chapter: ch, questions: qs, mode, order: "level" });
-    } catch (err) {
-      clearInterval(tick);
-      setAiStatus(aiErrorText(err, Anthropic), "err");
-    } finally {
-      aiBusy = false;
-      btn.disabled = false;
-      btn.classList.remove("is-loading");
-    }
-  }
-
-  function aiErrorText(err, Anthropic) {
-    if (Anthropic) {
-      if (err instanceof Anthropic.AuthenticationError) return "API key không hợp lệ. Kiểm tra lại key trong phần Cài đặt AI.";
-      if (err instanceof Anthropic.PermissionDeniedError) return "API key không có quyền dùng mô hình này. Thử chọn mô hình khác.";
-      if (err instanceof Anthropic.RateLimitError) return "Đang vượt giới hạn gọi API. Đợi một lát rồi thử lại.";
-      if (err instanceof Anthropic.BadRequestError) return "Yêu cầu bị từ chối (" + (err.message || "400") + "). Nếu tài khoản hết credit, hãy nạp thêm tại console.anthropic.com.";
-      if (err instanceof Anthropic.APIConnectionError) return "Không kết nối được tới máy chủ AI. Kiểm tra mạng rồi thử lại.";
-      if (err instanceof Anthropic.APIError) return "Máy chủ AI báo lỗi (" + (err.status || "") + "). Thử lại sau ít phút.";
-    }
-    if (err instanceof SyntaxError) return "AI trả về dữ liệu không đọc được. Hãy thử tạo lại.";
-    return err && err.message ? err.message : "Có lỗi xảy ra, hãy thử lại.";
-  }
 
   /* ==========================================================
      INTRO

@@ -35,10 +35,6 @@
         <span>Ôn Mạng<span class="brand-dot">.</span></span>
       </a>
       <div class="topbar-actions">
-      <button class="btn btn-primary btn-ai" id="aiBtnTop" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" fill="currentColor"/></svg>
-        <span>Luyện cùng AI</span>
-      </button>
       <button class="btn btn-soft" id="mixBtnTop" type="button">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Đề tổng hợp</span>
@@ -165,7 +161,6 @@
             <div class="result-actions">
               <button class="btn btn-primary" id="reviewBtn" type="button">Xem lại bài làm</button>
               <button class="btn btn-soft" id="retryBtn" type="button">Làm lại</button>
-              <button class="btn btn-soft" id="aiFromResultBtn" type="button" hidden>✦ AI ra đề từ câu sai</button>
               <button class="btn btn-ghost" id="homeBtn" type="button">Chọn chương khác</button>
             </div>
           </div>
@@ -241,64 +236,6 @@
       </fieldset>
 
       <button class="btn btn-primary btn-block btn-lg" id="startBtn" type="button">Bắt đầu làm bài</button>
-    </div>
-  </div>
-
-  <!-- ===== AI modal ===== -->
-  <div class="modal" id="aiModal" hidden>
-    <div class="modal-backdrop" data-close></div>
-    <div class="sheet sheet-ai" role="dialog" aria-modal="true" aria-labelledby="aiTitle">
-      <button class="sheet-x" type="button" data-close aria-label="Đóng">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-      </button>
-      <p class="eyebrow">Luyện cùng AI ✦</p>
-      <h3 id="aiTitle">Tạo đề mới bằng AI</h3>
-      <p class="muted">AI soạn câu hỏi mới theo đúng tiêu chí ra đề, nhắm vào lỗi sai cũ của bạn và biến tấu cách hỏi (có cả câu chọn nhiều đáp án).</p>
-
-      <label class="field">
-        <span class="field-label">Chương</span>
-        <select id="aiChapter" class="select"></select>
-      </label>
-      <label class="check-line">
-        <input type="checkbox" id="aiUseMistakes">
-        <span><strong>Dựa trên lỗi sai cũ của tôi</strong><small id="aiMistakeInfo"></small></span>
-      </label>
-
-      <fieldset class="choice">
-        <legend>Số câu (tỉ lệ 3-4-3)</legend>
-        <div class="seg seg-3">
-          <label><input type="radio" name="ainum" value="10" checked><span>10 câu</span></label>
-          <label><input type="radio" name="ainum" value="20"><span>20 câu</span></label>
-          <label><input type="radio" name="ainum" value="40"><span>40 câu</span></label>
-        </div>
-      </fieldset>
-      <fieldset class="choice">
-        <legend>Chế độ làm bài</legend>
-        <div class="seg">
-          <label><input type="radio" name="aimode" value="practice" checked><span>Luyện tập</span></label>
-          <label><input type="radio" name="aimode" value="exam"><span>Thi thử</span></label>
-        </div>
-      </fieldset>
-
-      <details class="ai-settings" id="aiSettingsBox">
-        <summary>Cài đặt AI (API key)</summary>
-        <label class="field">
-          <span class="field-label">Anthropic API key</span>
-          <span class="key-row">
-            <input type="password" id="aiKey" class="input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
-            <button class="btn btn-ghost btn-sm" id="aiKeyToggle" type="button">Hiện</button>
-          </span>
-        </label>
-        <label class="field">
-          <span class="field-label">Mô hình</span>
-          <select id="aiModel" class="select"></select>
-        </label>
-        <p class="fine">Lấy key tại <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> (cần nạp credit). Key chỉ lưu trong trình duyệt của bạn và được gửi thẳng tới máy chủ Anthropic, không qua máy chủ nào khác. Chi phí ước tính mỗi lượt 10–20 câu: Opus 5.5 khoảng 0,1–0,3 USD; Haiku 5.5 dưới 0,01 USD. <button class="linkish" id="aiForget" type="button">Xóa key đã lưu</button></p>
-      </details>
-
-      <p class="ai-status" id="aiStatus" role="status" hidden></p>
-      <button class="btn btn-primary btn-block btn-lg" id="aiGenBtn" type="button"><span class="spin" aria-hidden="true"></span><span>Tạo đề bằng AI</span></button>
-      <button class="btn btn-ghost btn-block" id="aiLastBtn" type="button" hidden>Làm lại đề AI gần nhất</button>
     </div>
   </div>
 
