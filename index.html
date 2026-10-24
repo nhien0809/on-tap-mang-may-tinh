@@ -160,6 +160,7 @@
             <div class="lv-stats" id="rLevels"></div>
             <div class="result-actions">
               <button class="btn btn-primary" id="reviewBtn" type="button">Xem lại bài làm</button>
+              <button class="btn btn-primary" id="retryWrongBtn" type="button" hidden>Làm lại câu sai</button>
               <button class="btn btn-soft" id="retryBtn" type="button">Làm lại</button>
               <button class="btn btn-ghost" id="homeBtn" type="button">Chọn chương khác</button>
             </div>
@@ -195,7 +196,7 @@
       <p class="eyebrow" id="setupEyebrow">Chương 1</p>
       <h3 id="setupTitle">Khái niệm cơ bản</h3>
       <p class="muted" id="setupTopics"></p>
-      <div class="mixline">
+      <div class="mixline" id="setupMix">
         <span class="lv lv1">12 Nhận biết</span>
         <span class="lv lv2">16 Thông hiểu</span>
         <span class="lv lv3">12 Vận dụng</span>
@@ -218,6 +219,11 @@
           </span>
         </label>
       </fieldset>
+
+      <label class="field" id="scopeChoice" hidden>
+        <span class="field-label">Phạm vi ôn tập</span>
+        <select id="reviewScope" class="select"></select>
+      </label>
 
       <fieldset class="choice" id="countChoice" hidden>
         <legend>Số câu</legend>

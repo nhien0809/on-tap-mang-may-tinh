@@ -20,6 +20,7 @@
   const LETTERS = ["A", "B", "C", "D"];
   const SECONDS_PER_Q = 60;
   const STORE_KEY = "onmang.best.v1";
+  const WRONG_KEY = "onmang.wrong.v1";
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -65,6 +66,32 @@
     }
   };
 
+  // Sổ câu sai: { "chương:chỉ số câu": { n: số lần sai, at } }
+  const wrongBook = {
+    all() { return readJSON(WRONG_KEY, {}); },
+    ids(ch) {
+      return Object.entries(this.all())
+        .filter(([id]) => !ch || id.split(":")[0] === String(ch))
+        .sort((a, b) => b[1].at - a[1].at)
+        .map(([id]) => id);
+    },
+    count(ch) { return this.ids(ch).length; },
+    // làm sai -> ghi vào sổ; làm đúng -> gạch khỏi sổ; bỏ trống -> giữ nguyên
+    update(results) {
+      const book = this.all();
+      results.forEach(({ id, ok }) => {
+        if (ok) delete book[id];
+        else book[id] = { n: ((book[id] && book[id].n) || 0) + 1, at: Date.now() };
+      });
+      writeJSON(WRONG_KEY, book);
+    }
+  };
+  function questionById(id) {
+    const [ch, idx] = id.split(":").map(Number);
+    const c = CHAPTERS.find((x) => x.id === ch);
+    return c && c.questions[idx] ? normalize(c.questions[idx], ch, idx) : null;
+  }
+
   /* ---------- helpers ---------- */
   function shuffle(arr) {
     const a = arr.slice();
@@ -95,9 +122,9 @@
   const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
 
   // Chuẩn hóa câu hỏi: ans = chỉ số (gốc) các phương án đúng
-  function normalize(q, ch) {
+  function normalize(q, ch, idx) {
     const multi = Array.isArray(q.m) && q.m.length > 0;
-    return { ...q, ch, t: multi ? "multi" : "single", ans: multi ? q.m.slice() : [0] };
+    return { ...q, ch, id: ch + ":" + idx, t: multi ? "multi" : "single", ans: multi ? q.m.slice() : [0] };
   }
   function pickByQuota(pool, quota) {
     return [1, 2, 3].flatMap((lv) => shuffle(pool.filter((q) => q.l === lv)).slice(0, quota[lv]));
@@ -108,12 +135,12 @@
   const totalQ = CHAPTERS.reduce((s, c) => s + c.questions.length, 0);
   $("#statTotal").textContent = totalQ;
 
-  function cardHTML({ no, title, topics, meta, best }) {
-    const tag = best ? "Cao nhất " + fmtScore(best.score) : "Chưa làm";
+  function cardHTML({ no, title, topics, meta, best, badge }) {
+    const tag = badge != null ? badge : best ? "Cao nhất " + fmtScore(best.score) : "Chưa làm";
     return `
       <div class="ch-top">
         <span class="ch-no">${no}</span>
-        <span class="ch-best ${best ? "" : "is-new"}">${tag}</span>
+        <span class="ch-best ${best || badge ? "" : "is-new"}">${tag}</span>
       </div>
       <h3>${title}</h3>
       <p class="ch-topics">${topics}</p>
@@ -127,6 +154,22 @@
   function renderHome() {
     const grid = $("#chGrid");
     grid.innerHTML = "";
+
+    const nWrong = wrongBook.count();
+    const rv = el("button", "ch-card is-review" + (nWrong ? "" : " is-empty"));
+    rv.type = "button";
+    rv.dataset.key = "review";
+    rv.innerHTML = cardHTML({
+      no: "Ôn câu sai",
+      title: "Sổ câu sai của bạn",
+      topics: nWrong
+        ? "Làm lại riêng những câu bạn từng chọn sai. Làm đúng câu nào thì câu đó tự được gạch khỏi sổ."
+        : "Chưa có câu sai nào. Làm thử một chương, câu chọn sai sẽ tự được lưu vào đây để ôn lại.",
+      meta: nWrong ? `${nWrong} câu cần ôn` : "Trống",
+      badge: nWrong ? nWrong + " câu" : "Trống"
+    });
+    rv.addEventListener("click", openReview);
+    grid.appendChild(rv);
 
     CHAPTERS.forEach((c) => {
       const best = store.best("ch" + c.id);
@@ -197,7 +240,21 @@
   function openSetup(src) {
     pendingSetup = src;
     const countBox = $("#countChoice");
-    if (src.type === "chapter") {
+    $("#scopeChoice").hidden = src.type !== "review";
+    $("#setupMix").hidden = src.type === "review";
+    if (src.type === "review") {
+      $("#setupEyebrow").textContent = "Ôn câu sai";
+      $("#setupTitle").textContent = "Sổ câu sai của bạn";
+      $("#setupTopics").textContent = "Chọn phạm vi muốn ôn. Câu làm đúng sẽ được gạch khỏi sổ, câu làm sai tiếp tục được giữ lại.";
+      countBox.hidden = true;
+      const sel = $("#reviewScope");
+      sel.innerHTML = "";
+      sel.appendChild(new Option(`Tất cả các chương (${wrongBook.count()} câu)`, "all"));
+      CHAPTERS.forEach((c) => {
+        const n = wrongBook.count(c.id);
+        if (n) sel.appendChild(new Option(`Chương ${c.id} · ${c.title} (${n} câu)`, c.id));
+      });
+    } else if (src.type === "chapter") {
       const n = src.chapter.questions.length;
       $("#setupEyebrow").textContent = "Chương " + pad2(src.chapter.id);
       $("#setupTitle").textContent = src.chapter.title;
@@ -214,10 +271,23 @@
     showModal(setupModal);
   }
   $$("[data-close]", setupModal).forEach((b) => b.addEventListener("click", () => hideModal(setupModal)));
+  function openReview() {
+    if (!wrongBook.count()) {
+      confirmDialog({
+        title: "Sổ câu sai đang trống",
+        text: "Hãy làm thử một chương. Những câu bạn chọn sai sẽ tự được lưu vào đây để ôn lại.",
+        ok: "Đã hiểu",
+        cancel: null
+      });
+      return;
+    }
+    openSetup({ type: "review" });
+  }
   $("#startBtn").addEventListener("click", async () => {
     const mode = $("input[name=mode]:checked", setupModal).value;
     const order = $("input[name=order]:checked", setupModal).value;
     const count = $("input[name=count]:checked", setupModal).value;
+    if (pendingSetup.type === "review") pendingSetup = { ...pendingSetup, scope: $("#reviewScope").value };
     await hideModal(setupModal);
     startQuiz({ ...pendingSetup, mode, order, count });
   });
@@ -229,7 +299,8 @@
     $("#cfTitle").textContent = title;
     $("#cfText").textContent = text;
     $("#cfOk").textContent = ok;
-    $("#cfCancel").textContent = cancel;
+    $("#cfCancel").textContent = cancel || "";
+    $("#cfCancel").hidden = !cancel;
     showModal(confirmModal);
     return new Promise((res) => { confirmResolve = res; });
   }
@@ -280,11 +351,15 @@
   function buildItems(cfg) {
     let pool;
     if (cfg.type === "chapter") {
-      pool = cfg.chapter.questions.map((q) => normalize(q, cfg.chapter.id));
+      pool = cfg.chapter.questions.map((q, i) => normalize(q, cfg.chapter.id, i));
       if (cfg.count !== "all" && pool.length > 40) pool = pickByQuota(pool, QUOTA_40);
+    } else if (cfg.type === "review") {
+      pool = wrongBook.ids(cfg.scope === "all" ? 0 : cfg.scope).map(questionById).filter(Boolean);
+    } else if (cfg.type === "retry") {
+      pool = cfg.pool;
     } else {
       const all = [];
-      CHAPTERS.forEach((c) => c.questions.forEach((q) => all.push(normalize(q, c.id))));
+      CHAPTERS.forEach((c) => c.questions.forEach((q, i) => all.push(normalize(q, c.id, i))));
       pool = pickByQuota(all, QUOTA_40);
     }
     const ordered = cfg.order === "random"
@@ -303,7 +378,9 @@
     const items = buildItems(cfg);
     const meta = {
       chapter: { key: "ch" + (cfg.chapter && cfg.chapter.id), eyebrow: "Chương " + pad2(cfg.chapter ? cfg.chapter.id : 0), title: cfg.chapter && cfg.chapter.title },
-      mix: { key: "mix", eyebrow: "Đề tổng hợp", title: "Trộn cả 7 chương" }
+      mix: { key: "mix", eyebrow: "Đề tổng hợp", title: "Trộn cả 7 chương" },
+      review: { key: null, eyebrow: "Ôn câu sai", title: cfg.scope === "all" || !cfg.scope ? "Sổ câu sai · tất cả chương" : "Sổ câu sai · Chương " + cfg.scope },
+      retry: { key: null, eyebrow: "Làm lại câu sai", title: cfg.title }
     }[cfg.type];
     S = {
       cfg,
@@ -614,11 +691,14 @@
     const total = S.items.length;
     const perLv = { 1: [0, 0], 2: [0, 0], 3: [0, 0] };
     let right = 0;
+    const results = [];
     S.items.forEach((it, i) => {
       const ok = isRight(S, i);
       perLv[it.q.l][1]++;
       if (ok) { right++; perLv[it.q.l][0]++; }
+      if (S.answers[i] !== null) results.push({ id: it.q.id, ok });
     });
+    wrongBook.update(results);
     const score = (right / total) * 10;
     if (S.key) store.save(S.key, score);
     R = { ...S, right, total, score, perLv, timeUp, spent: (Date.now() - S.startedAt) / 1000 };
@@ -639,6 +719,10 @@
     $("#rMsg").textContent = R.timeUp ? "Hết giờ! Bài đã được nộp tự động" : resultMessage(R.score);
     $("#rSub").textContent = `Đúng ${R.right}/${R.total} câu · Thời gian ${fmtDuration(R.spent)}`;
     $("#rScore").textContent = "0";
+    const wrongN = R.total - R.right;
+    const rb = $("#retryWrongBtn");
+    rb.hidden = wrongN === 0;
+    rb.textContent = `Làm lại ${wrongN} câu chưa đúng`;
 
     const lvBox = $("#rLevels");
     lvBox.innerHTML = "";
@@ -765,6 +849,11 @@
     rv.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
   });
   $("#retryBtn").addEventListener("click", () => { if (lastConfig) startQuiz(lastConfig); });
+  $("#retryWrongBtn").addEventListener("click", () => {
+    const pool = R.items.filter((_, i) => !isRight(R, i)).map((it) => it.q);
+    if (!pool.length) return;
+    startQuiz({ type: "retry", pool, mode: "practice", order: "level", title: R.title });
+  });
   $("#homeBtn").addEventListener("click", goHome);
 
   /* ==========================================================

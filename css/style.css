@@ -340,6 +340,15 @@ kbd { display: inline-block; min-width: 22px; padding: 1px 6px; border: 1px soli
 .check-btn { margin-top: 14px; }
 .check-btn:disabled { opacity: .5; }
 
+.ch-card.is-review { background: linear-gradient(140deg, #fff 0%, #fff1f6 55%, #ffe1eb 100%); border-color: var(--pink-200); }
+.ch-card.is-review .ch-best { background: var(--pink-500); border-color: var(--pink-500); color: #fff; }
+.ch-card.is-review .ch-go { background: var(--pink-500); color: #fff; }
+.ch-card.is-review.is-empty .ch-best { background: var(--surface); border-color: var(--line); color: var(--muted); }
+.field { display: block; margin-bottom: 16px; }
+.field-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.select { width: 100%; min-height: 44px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface-2); font: inherit; font-size: 15px; color: var(--ink); }
+.select:focus { outline: none; border-color: var(--pink-400); box-shadow: 0 0 0 3px rgba(247, 85, 138, .15); }
+
 /* ---------- petals ---------- */
 .petals { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
 .petal { position: absolute; top: 0; left: 0; width: 14px; height: 14px; border-radius: 100% 0 100% 0; background: linear-gradient(135deg, #ffc5d7, #f7558a); opacity: .9; will-change: transform; }
