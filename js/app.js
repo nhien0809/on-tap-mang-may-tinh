@@ -264,7 +264,7 @@
       if (d === "rand") return DE_SIZE;
       return Math.min(DE_SIZE, src.chapter.questions.length - (Number(d) - 1) * DE_SIZE);
     }
-    if (src.type === "mix") return Number($("#mixCount").value);
+    if (src.type === "mix") return Math.max(1, Math.min(mixPoolSize(), Number($("#mixCount").value) || 1));
     if (src.type === "review") {
       const v = $("#reviewScope").value;
       return wrongBook.count(v === "all" ? 0 : v);
@@ -292,14 +292,25 @@
   function mixPoolSize() {
     return $$("#mixChapters input:checked").reduce((s, cb) => s + CHAPTERS.find((c) => c.id === Number(cb.value)).questions.length, 0);
   }
+  // Đặt số câu cho Ôn tổng hợp: đồng bộ ô nhập, thanh kéo và nút chọn nhanh
+  function setMixCount(n) {
+    const max = mixPoolSize();
+    n = Math.max(1, Math.min(max, Math.round(Number(n)) || 1));
+    $("#mixCount").value = n;
+    $("#mixCountInput").value = n;
+    $$("#mixCountPresets button").forEach((b) => {
+      const v = b.dataset.n === "all" ? max : Number(b.dataset.n);
+      b.classList.toggle("is-on", v === n);
+      b.disabled = b.dataset.n !== "all" && v > max;
+    });
+    refreshSetup();
+  }
   function refreshMixRange() {
     const max = mixPoolSize();
-    const r = $("#mixCount");
-    r.max = Math.max(10, max);
-    if (Number(r.value) > max) r.value = max;
-    $("#mixCountVal").textContent = r.value;
-    $("#mixMax").textContent = `tối đa ${max} câu`;
-    refreshSetup();
+    $("#mixCount").max = max;
+    $("#mixCountInput").max = max;
+    $("#mixMax").textContent = `(1 – ${max} câu)`;
+    setMixCount($("#mixCount").value);
   }
 
   (function initSetupControls() {
@@ -315,12 +326,22 @@
       refreshMixRange();
     });
     $("#mixAll").addEventListener("click", () => { $$("#mixChapters input").forEach((cb) => (cb.checked = true)); refreshMixRange(); });
-    $("#mixCount").addEventListener("input", () => { $("#mixCountVal").textContent = $("#mixCount").value; refreshSetup(); });
+    $("#mixCount").addEventListener("input", () => setMixCount($("#mixCount").value));
+    const inp = $("#mixCountInput");
+    inp.addEventListener("input", () => {
+      // đang gõ: chỉ cập nhật khi là số hợp lệ, chưa ép về giới hạn
+      const v = Number(inp.value);
+      if (inp.value !== "" && v >= 1) {
+        $("#mixCount").value = Math.min(v, mixPoolSize());
+        refreshSetup();
+      }
+    });
+    inp.addEventListener("change", () => setMixCount(inp.value));
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); setMixCount(inp.value); } });
+    $("#mixMinus").addEventListener("click", () => setMixCount(Number($("#mixCount").value) - 1));
+    $("#mixPlus").addEventListener("click", () => setMixCount(Number($("#mixCount").value) + 1));
     $$("#mixCountPresets button").forEach((b) => b.addEventListener("click", () => {
-      const r = $("#mixCount");
-      r.value = Math.min(Number(b.dataset.n), Number(r.max));
-      $("#mixCountVal").textContent = r.value;
-      refreshSetup();
+      setMixCount(b.dataset.n === "all" ? mixPoolSize() : b.dataset.n);
     }));
     const tp = $("#timePresets");
     TIME_PRESETS.forEach((m) => {
@@ -411,6 +432,7 @@
     if (pendingSetup.type === "chapter") extra.de = $("input[name=de]:checked", setupModal).value;
     if (pendingSetup.type === "mix") {
       extra.chapters = $$("#mixChapters input:checked").map((cb) => Number(cb.value));
+      setMixCount($("#mixCountInput").value);
       extra.n = Number($("#mixCount").value);
     }
     await hideModal(setupModal);

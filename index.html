@@ -231,13 +231,22 @@
           <div class="chip-row" id="mixChapters"></div>
         </fieldset>
         <fieldset class="choice">
-          <legend>Số câu: <strong class="count-val" id="mixCountVal">40</strong> <span class="muted" id="mixMax"></span></legend>
-          <input type="range" id="mixCount" class="range" min="10" max="560" step="5" value="40" aria-label="Số câu">
+          <legend>Số câu muốn làm <span class="muted" id="mixMax"></span></legend>
+          <div class="count-row">
+            <button class="step-btn" type="button" id="mixMinus" aria-label="Bớt 1 câu">−</button>
+            <input type="number" id="mixCountInput" class="input input-num count-input" min="1" max="560" step="1" value="40" inputmode="numeric" aria-label="Số câu muốn làm">
+            <button class="step-btn" type="button" id="mixPlus" aria-label="Thêm 1 câu">+</button>
+            <span class="muted">câu</span>
+          </div>
+          <input type="range" id="mixCount" class="range" min="1" max="560" step="1" value="40" aria-label="Kéo để chọn số câu">
           <div class="chip-row" id="mixCountPresets">
+            <button class="chip-btn" type="button" data-n="10">10</button>
             <button class="chip-btn" type="button" data-n="20">20</button>
+            <button class="chip-btn" type="button" data-n="30">30</button>
             <button class="chip-btn" type="button" data-n="40">40</button>
-            <button class="chip-btn" type="button" data-n="60">60</button>
+            <button class="chip-btn" type="button" data-n="50">50</button>
             <button class="chip-btn" type="button" data-n="100">100</button>
+            <button class="chip-btn" type="button" data-n="all">Tất cả</button>
           </div>
         </fieldset>
       </div>
